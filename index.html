@@ -1,157 +1,39 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AchAI Pro - Buscador Inteligente & Mais Vendidos</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        header { background: linear-gradient(135deg, #1e293b, #2563eb); width: 100%; padding: 40px 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); box-sizing: border-box; }
-        h1 { margin: 0; font-size: 2.2rem; }
-        header p { opacity: 0.9; max-width: 600px; margin: 10px auto 0; }
-        .search-container { margin-top: -25px; background: #1e293b; padding: 15px; border-radius: 12px; width: 90%; max-width: 720px; display: flex; gap: 10px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.4); box-sizing: border-box; }
-        input { flex: 1; padding: 14px; border: 1px solid #475569; background: #0f172a; color: white; border-radius: 8px; font-size: 1rem; outline: none; }
-        input:focus { border-color: #3b82f6; }
-        button { background: #3b82f6; color: white; border: none; padding: 14px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #2563eb; }
-        
-        .container { width: 90%; max-width: 720px; margin: 30px 0 60px; }
-        .section-title { font-size: 1.2rem; color: #e2e8f0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-        
-        .showcase-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 35px; }
-        .product-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; }
-        .product-card:hover { transform: translateY(-3px); border-color: #3b82f6; }
-        .badge { background: #ef4444; color: white; font-size: 0.7rem; font-weight: bold; padding: 3px 8px; border-radius: 12px; align-self: flex-start; margin-bottom: 8px; }
-        .prod-title { font-weight: bold; font-size: 1rem; margin-bottom: 6px; color: #f8fafc; }
-        .prod-desc { font-size: 0.82rem; color: #94a3b8; margin-bottom: 14px; line-height: 1.4; }
-        .prod-btn { background: #334155; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; cursor: pointer; text-align: center; }
-        .prod-btn:hover { background: #38bdf8; color: #0f172a; }
-
-        .ai-box { background: #1e293b; border-left: 4px solid #10b981; padding: 20px; border-radius: 10px; margin-bottom: 25px; line-height: 1.6; }
-        .store-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-        .card { background: #1e293b; padding: 16px; border-radius: 10px; border: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
-        .buy-btn { background: #10b981; color: #0f172a; text-decoration: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; }
-        .buy-btn:hover { background: #34d399; }
-    </style>
-</head>
-<body>
-
-<header>
-    <h1>AchAI Pro 🤖🛍️</h1>
-    <p>Pesquise qualquer produto ou explore os campeões de venda. Nossa IA compara e encontra as melhores ofertas.</p>
-</header>
-
-<div class="search-container">
-    <input type="text" id="searchInput" placeholder="Ex: Melhor fone bluetooth, Air Fryer 4L, Aspirador portátil...">
-    <button onclick="consultarIA()">Buscar com IA</button>
-</div>
-
-<div class="container">
-    <div id="resultsArea"></div>
-
-    <div id="vitrineArea">
-        <div class="section-title">🔥 Mais Vendidos e Procurados no E-commerce</div>
-        <div class="showcase-grid" id="showcaseGrid"></div>
-    </div>
-</div>
-
-<script>
-    const TAG_AMAZON = "seutag-20";
-    const LOJA_MAGALU = "sualoja";
-
-    const MAIS_VENDIDOS = [
-        { tag: "TOP 1 COZINHA", nome: "Air Fryer 4L a 5L", desc: "Fritadeira elétrica sem óleo com alto índice de aprovação.", termo: "Air Fryer 4L" },
-        { tag: "ALTA PROCURA", nome: "Fone Bluetooth TWS", desc: "Modelos com cancelamento de ruído e bateria de longa duração.", termo: "Fone Bluetooth TWS" },
-        { tag: "CASA INTELIGENTE", nome: "Aspirador Vertical / Portátil", desc: "Praticidade para limpeza rápida de casa e carro.", termo: "Aspirador Portatil" },
-        { tag: "TECNOLOGIA", nome: "Smartwatch Esportivo", desc: "Monitoramento de saúde, notificações e resistência à água.", termo: "Smartwatch" },
-        { tag: "ORGANIZAÇÃO", nome: "Kit Potes Herméticos", desc: "Campeão de vendas para organização de cozinha e geladeira.", termo: "Kit Potes Hermeticos" },
-        { tag: "BELEZA & PELE", nome: "Sérum Vitamina C & Ácido", desc: "Itens de skincare mais buscados com ótimo custo-benefício.", termo: "Serum Vitamina C" }
-    ];
-
-    function carregarVitrine() {
-        const grid = document.getElementById('showcaseGrid');
-        grid.innerHTML = MAIS_VENDIDOS.map(item => `
-            <div class="product-card">
-                <div>
-                    <span class="badge">${item.tag}</span>
-                    <div class="prod-title">${item.nome}</div>
-                    <div class="prod-desc">${item.desc}</div>
-                </div>
-                <button class="prod-btn" onclick="buscarDaVitrine('${item.termo}')">Comparar Preços</button>
-            </div>
-        `).join('');
+export default async function handler(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Método não permitido' });
     }
 
-    function buscarDaVitrine(termo) {
-        document.getElementById('searchInput').value = termo;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        consultarIA();
+    const { query } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+        return res.status(500).json({ error: 'Chave API não configurada no servidor.' });
     }
 
-    async function consultarIA() {
-        const query = document.getElementById('searchInput').value.trim();
-        const resultsArea = document.getElementById('resultsArea');
-        if (!query) return;
+    const prompt = `Você é um especialista em compras no Brasil. O usuário busca: "${query}".
+    Responda de forma curta e persuasiva em HTML simples (use apenas <ul>, <li>, <strong>):
+    1. Indique os 3 melhores modelos custo-benefício atuais para essa busca.
+    2. Diga em 1 frase o que observar antes de comprar.
+    3. Ao final, forneça apenas um termo de busca curto (máximo 3 palavras) dentro de uma tag oculta: <span id="termoOtimizado" style="display:none">TERMO AQUI</span>`;
 
-        resultsArea.innerHTML = `<div class="ai-box">🤖 A IA está analisando os melhores modelos para <strong>"${query}"</strong>...</div>`;
+    try {
+        const response = await fetch(`https://googleapis.com{apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
 
-        try {
-            const response = await fetch('/api/buscar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query })
-            });
-
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-
-            resultsArea.innerHTML = `
-                <div class="ai-box">
-                    <h3>💡 Recomendação da IA:</h3>
-                    ${data.resposta}
-                </div>
-                <div id="linksLojas"></div>
-            `;
-
-            const termoEl = document.getElementById('termoOtimizado');
-            const termoFinal = termoEl ? termoEl.innerText.trim() : query;
-            gerarBotoesLojas(termoFinal);
-        } catch (err) {
-            resultsArea.innerHTML = `<div class="ai-box">❌ Erro ao consultar a IA. Verifique se o arquivo api/buscar.js e a chave GEMINI_API_KEY estão configurados.</div>`;
+        const data = await response.json();
+        
+        if (!response.ok) {
+            return res.status(500).json({ error: data.error?.message || 'Erro na API do Gemini' });
         }
+
+        const aiText = data.candidates[0].content.parts[0].text;
+        return res.status(200).json({ resposta: aiText });
+    } catch (error) {
+        return res.status(500).json({ error: 'Falha ao consultar a IA.' });
     }
-
-    function gerarBotoesLojas(termoBusca) {
-        const termo = encodeURIComponent(termoBusca);
-        const termoHifen = termoBusca.toLowerCase().replace(/\s+/g, '-');
-
-        const lojas = [
-            { nome: "Amazon Brasil", tag: "Entrega Prime", url: `https://amazon.com.br{termo}&tag=${TAG_AMAZON}` },
-            { nome: "Mercado Livre", tag: "Envio Full", url: `https://mercadolivre.com.br{termoHifen}` },
-            { nome: "Shopee", tag: "Cupons & Ofertas", url: `https://shopee.com.br{termo}` },
-            { nome: "Magalu", tag: "Parceiro Oficial", url: `https://magazinevoce.com.br{LOJA_MAGALU}/busca/${termo}/` },
-            { nome: "AliExpress", tag: "Importação Direta", url: `https://aliexpress.com{termo}` },
-            { nome: "Temu", tag: "Preço de Fábrica", url: `https://temu.com{termo}` },
-            { nome: "SHEIN", tag: "Moda & Casa", url: `https://shein.com{termo}/` }
-        ];
-
-        const cardsHtml = lojas.map(loja => `
-            <div class="card">
-                <div><strong>${loja.nome}</strong><br><small style="color:#94a3b8">${loja.tag}</small></div>
-                <a href="${loja.url}" target="_blank" rel="noopener" class="buy-btn">Ver Preço</a>
-            </div>
-        `).join('');
-
-        document.getElementById('linksLojas').innerHTML = `
-            <div class="section-title">🛒 Onde comprar "${termoBusca}" com menor preço:</div>
-            <div class="store-grid" style="margin-bottom: 40px;">${cardsHtml}</div>
-        `;
-    }
-
-    carregarVitrine();
-</script>
-
-<!-- COLE AQUI O SCRIPT DO MONEY LINK DA ADMITAD -->
-
-</body>
-</html>
+}
